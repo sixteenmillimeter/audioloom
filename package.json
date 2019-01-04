@@ -1,0 +1,28 @@
+{
+  "name": "audioloom",
+  "version": "1.0.0",
+  "description": "Node script for interweaving audio files together",
+  "main": "audioloom",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sixteenmillimeter/audioloom.git"
+  },
+  "author": "sixteenmillimeter",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sixteenmillimeter/audioloom/issues"
+  },
+  "homepage": "https://github.com/sixteenmillimeter/audioloom#readme",
+  "dependencies": {
+    "commander": "^2.19.0",
+    "fs-extra": "^7.0.1"
+  },
+  "devDependencies": {
+    "jsdoc-to-markdown": "^4.0.1",
+    "pkg": "^4.3.5",
+    "qunit": "^2.8.0"
+  }
+}
