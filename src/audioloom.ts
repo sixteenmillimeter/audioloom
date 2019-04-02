@@ -203,7 +203,7 @@ async function slices (file : string, len : number, order : number) {
  * 	@param 	{boolean}	realtime 	Flag to turn on or off realtime behavior (drop slice / number of files)
  *  @param  {boolean}	random 		Flag to turn on or off random behavior
  *
- *  @returns {array} Array of frame paths
+ *  @returns {array} Array of slice paths
  **/
 async function weave (pattern : number[], realtime : boolean, random : boolean) {
 	let slices : string[]
@@ -260,12 +260,12 @@ async function weave (pattern : number[], realtime : boolean, random : boolean) 
  * 	@param 	{array} 	pattern 	Array representing pattern
  *	@param 	{boolean}	realtime 	Flag to group with "realtime" behavior
  *
- *  @returns {array} Sorted array of frames
+ *  @returns {array} Sorted array of slices
  **/
 async function altSort (list : string[], pattern : number[], realtime : boolean) {
 	let groups : any[] = []
 	let newList : string[] = []
-	let frameCount : number = 0
+	let sliceCount : number = 0
 	let oldPath : string
 	let newName : string
 	let newPath : string 
@@ -282,7 +282,7 @@ async function altSort (list : string[], pattern : number[], realtime : boolean)
 			for (let i = 0; i < g; i++) {
 
 				/*oldPath = path.join(TMPPATH, list[i]);
-				newName = `./render_${zeroPad(frameCount)}${ext}`;
+				newName = `./render_${zeroPad(sliceCount)}${ext}`;
 				newPath = path.join(TMPPATH, newName);
 
 				console.log(`Renaming ${list[i]} -> ${newName}`);
@@ -294,20 +294,20 @@ async function altSort (list : string[], pattern : number[], realtime : boolean)
 					console.error(err);
 				}*/
 
-				frameCount++
+				sliceCount++
 			}
 		}
 	}
 	return newList
 }
 /**
- * 	Standard frame sorting method.
+ * 	Standard slice sorting method.
  *
  *	@param	{array}		list 		List of slices to group
  * 	@param 	{array} 	pattern 	Array representing pattern
  *	@param 	{boolean}	realtime 	Flag to group with "realtime" behavior
  *
- *  @returns {array} Sorted array of frames
+ *  @returns {array} Sorted array of slices
  **/
 async function standardSort (list : string[], pattern : number[], realtime : boolean) {
 	let sliceCount : number = 0
@@ -366,13 +366,13 @@ async function standardSort (list : string[], pattern : number[], realtime : boo
 	return newList
 }
 /**
- *	Ramdomly sort frames for re-stitching.
+ *	Ramdomly sort slices for re-stitching.
  *	
- *	@param	{array}		list 		List of frames to group
+ *	@param	{array}		list 		List of slices to group
  * 	@param 	{array} 	pattern 	Array representing pattern
  *	@param 	{boolean}	realtime 	Flag to group with "realtime" behavior
  *
- *  @returns {array} Sorted array of frames
+ *  @returns {array} Sorted array of slices
  **/
 async function randomSort (list : string[], pattern : number[], realtime : boolean) {
 	let sliceCount : number = 0
@@ -423,7 +423,7 @@ async function randomSort (list : string[], pattern : number[], realtime : boole
 	return newList
 }
 /**
- *	Render the frames into a video using ffmpeg.
+ *	Render the slices into a video using ffmpeg.
  *
  * 	@param 	{string} 	output 	Path to export the video to
  **/
@@ -580,14 +580,12 @@ program
   .version(packageJson.version)
   .option('-i, --input [files]', 'Specify input audio files with paths seperated by colon')
   .option('-o, --output [file]', 'Specify output path of audio file')
-  .option('-p, --pattern [pattern]', 'Specify a pattern for the flicker 1:1 is standard')
+  .option('-p, --pattern [pattern]', 'Specify a pattern for the alternating 1:1 is standard')
   .option('-r, --realtime', 'Specify if audio files should preserve realtime speed')
   .option('-t, --tmp [dir]', 'Specify tmp directory for exporting slices')
+  .option('-m, --ms [ms]', 'Specify length of slices using length in milliseconds, will default to 1/24 sec')
 
-  .option('-f, --fps [fps]', 'Specify length of slices using an FPS value')
-  .option('-m, --ms [ms]', 'Specify length of slices using length in milliseconds')
-
-  .option('-R, --random', 'Randomize frames. Ignores pattern if included')
+  .option('-R, --random', 'Randomize slices. Ignores pattern if included')
   .parse(process.argv)
 
 main(program)
