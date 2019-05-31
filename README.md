@@ -47,7 +47,5 @@ Options:
 
 ## TODO
 
-* Fix alternate sort pattern features
-* Check for sox before executing
 * Generate example audiofiles automatically
 * Publish example audio files

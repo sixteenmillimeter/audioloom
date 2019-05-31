@@ -15,6 +15,7 @@ let TMPPATH : string
 let EXE : string = `sox`
 let IDENTIFY : string = `soxi`
 let SLICE : string = (1000 / 24) + ''
+let RATE : number = 48000 //standardize all to rate
 
 /**
  * 	Shells out to execute a command with async/await.
@@ -183,7 +184,7 @@ async function slices (file : string, len : number, order : number) {
 
 	for (i = 0; i < total; i++) {
 		tmpoutput = path.join(TMPPATH, `export-${zeroPad(i)}_${order}.${ext}`)
-		cmd = `${exe} "${file}" "${tmpoutput}" trim ${offset(i, slice)} ${parseFloat(slice) / 1000}`
+		cmd = `${exe} "${file}" "${tmpoutput}" rate ${RATE} trim ${offset(i, slice)} ${parseFloat(slice) / 1000}`
 		try {
 			console.log(cmd)
 			await exec(cmd)
@@ -241,8 +242,6 @@ async function weave (pattern : number[], realtime : boolean, random : boolean) 
 			console.error('Error sorting slices')
 		}
 	} else if (alt) {
-		console.warn('This feature is not ready, please check https://github.com/sixteenmillimeter/audioloom.git')
-		process.exit(10)
 		try {
 			seq = await altSort(slices, pattern, realtime)
 		} catch (err) {
@@ -265,39 +264,82 @@ async function weave (pattern : number[], realtime : boolean, random : boolean) 
 async function altSort (list : string[], pattern : number[], realtime : boolean) {
 	let groups : any[] = []
 	let newList : string[] = []
+	let loops : number = 0
+	let patternIndexes : number[] = []
 	let sliceCount : number = 0
+	let skipCount : number
+	let skip : boolean
+	let oldName : string
 	let oldPath : string
 	let newName : string
-	let newPath : string 
+	let newPath : string
 	let ext : string = path.extname(list[0])
+	let x : number
+	let i : number
 	
-	for (let g of pattern) {
+	for (x = 0; x < pattern.length; x++) {
 		groups.push([])
+		for (let i : number = 0; i < pattern[x]; i++) {
+			patternIndexes.push(x)
+		}
 	}
-	for (let i = 0; i < list.length; i++) {
+
+	for (i = 0; i < list.length; i++) {
 		groups[i % pattern.length].push(list[i])
 	}
-	for (let x : number = 0; x < list.length; x++) {
-		for (let g of pattern) {
-			for (let i = 0; i < g; i++) {
 
-				/*oldPath = path.join(TMPPATH, list[i]);
-				newName = `./render_${zeroPad(sliceCount)}${ext}`;
-				newPath = path.join(TMPPATH, newName);
+	loops = Math.ceil(list.length / patternIndexes.length)
 
-				console.log(`Renaming ${list[i]} -> ${newName}`);
+	if (realtime) {
+		skip = false
+		skipCount = patternIndexes.length + 1
+	}
 
+	for (x = 0; x < loops; x++) {
+		for (i = 0; i < patternIndexes.length; i++) {
+
+			if (realtime) {
+				skipCount--;
+				if (skipCount === 0) {
+					skip = !skip;
+					skipCount = pattern.length
+				}
+			}
+
+			if (typeof groups[patternIndexes[i]][0] === 'undefined') {
+				continue
+			}
+
+			oldName = String(groups[patternIndexes[i]][0])
+			oldPath = path.join(TMPPATH, oldName)
+
+			groups[patternIndexes[i]].shift()
+
+			if (skip) {
+				console.log(`Skipping ${oldName}`)
 				try {
-					//await fs.move(oldPath, newPath, { overwrite: true })
-					newList.push(newName);
+					await fs.unlink(oldPath)
 				} catch (err) {
-					console.error(err);
-				}*/
+					console.log('Error deleting slice', err)
+				}
+				continue
+			}
 
+			newName = `./render_${zeroPad(sliceCount)}${ext}`
+			newPath = path.join(TMPPATH, newName)
+			console.log(`Renaming ${oldName} -> ${newName}`)
+
+			try {
+				await fs.move(oldPath, newPath)
+				newList.push(newName)
 				sliceCount++
+			} catch (err) {
+				console.log('Error renaming slice', err)
+				return process.exit(10)
 			}
 		}
 	}
+
 	return newList
 }
 /**
@@ -484,6 +526,7 @@ async function main (arg : any) {
 	let random : boolean = false
 	let allSlices : string []
 	let len : number 
+	let exists : any
 	console.time('audioloom')
 
 	if (input.length < 2) {
@@ -522,6 +565,23 @@ async function main (arg : any) {
 		for (let i = 0; i <input.length; i++) {
 			pattern.push(1);
 		}
+	}
+
+	if (pattern.length !== input.length) {
+		console.error(`Number of inputs (${input.length}) doesn't match the pattern length (${pattern.length})`)
+		process.exit(10)
+	}
+
+	try {
+		exists = await exec(`which ${EXE}`)
+	} catch (err) {
+		console.error(`Error checking for ${EXE}`)
+		process.exit(11)
+	}
+
+	if (!exists || exists === '' || exists.indexOf(EXE) === -1) {
+		console.error(`${EXE} is required and is not installed. Please install ${EXE} to use audioloom.`)
+		process.exit(12)
 	}
 
 	if (arg.realtime) realtime = true
