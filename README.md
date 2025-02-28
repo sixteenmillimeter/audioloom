@@ -1,5 +1,7 @@
 # audioloom
 
+![Image showing waveforms of two tracks interweaved together with audioloom](./img/audioloom.jpg)
+
 Interweave slices of audio files together using sox
 
 --------
